@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minesweeper</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+  body {
+    font-family: 'Orbitron', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    background: #0d0d0d;
+    color: #0ff;
+    margin: 0;
+    padding-top: 50px;
+  }
+
+  h1 {
+    color: #0ff;
+    text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
+  }
+
+  #board {
+    display: grid;
+    grid-template-columns: repeat(10, 40px);
+    grid-template-rows: repeat(10, 40px);
+    gap: 3px;
+    margin-top: 20px;
+  }
+
+  .cell {
+    width: 40px;
+    height: 40px;
+    background: #111;
+    border: 2px solid #0ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: bold;
+    color: #0ff;
+    text-shadow: 0 0 5px #0ff;
+    transition: all 0.2s;
+  }
+
+  .cell:hover {
+    background: #0ff1;
+    transform: scale(1.05);
+  }
+
+  .cell.revealed {
+    background: #222;
+    border: 2px solid #0ff;
+    color: #fff;
+    text-shadow: 0 0 5px #fff;
+    cursor: default;
+  }
+
+  .cell.mine {
+    background: #f00;
+    border: 2px solid #ff0;
+    color: #ff0;
+    text-shadow: 0 0 10px #ff0, 0 0 20px #f00;
+  }
+
+  #status {
+    margin-top: 20px;
+    font-size: 1.2em;
+    color: #0ff;
+    text-shadow: 0 0 5px #0ff;
+  }
+</style>
+</head>
+<body>
+
+<h1>Minesweeper</h1>
+<div id="board"></div>
+<p id="status"></p>
+<button id="replay" style="
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1em;
+  color: #0ff;
+  background: #111;
+  border: 2px solid #0ff;
+  cursor: pointer;
+  text-shadow: 0 0 5px #0ff;
+  transition: all 0.2s;
+">🔄 Replay</button>
+
+<script>
+const rows = 10;
+const cols = 10;
+const minesCount = 15;
+const board = [];
+const boardEl = document.getElementById('board');
+const statusEl = document.getElementById('status');
+
+function createBoard() {
+  for(let r=0; r<rows; r++) {
+    board[r] = [];
+    for(let c=0; c<cols; c++) {
+      board[r][c] = {mine: false, revealed: false, flagged: false, number: 0};
+    }
+  }
+
+  let placed = 0;
+  while(placed < minesCount) {
+    let r = Math.floor(Math.random() * rows);
+    let c = Math.floor(Math.random() * cols);
+    if(!board[r][c].mine) {
+      board[r][c].mine = true;
+      placed++;
+    }
+  }
+
+  for(let r=0; r<rows; r++) {
+    for(let c=0; c<cols; c++) {
+      if(board[r][c].mine) continue;
+      let count = 0;
+      for(let dr=-1; dr<=1; dr++) {
+        for(let dc=-1; dc<=1; dc++) {
+          if(dr===0 && dc===0) continue;
+          let nr = r+dr, nc = c+dc;
+          if(nr>=0 && nr<rows && nc>=0 && nc<cols && board[nr][nc].mine) count++;
+        }
+      }
+      board[r][c].number = count;
+    }
+  }
+}
+
+function reveal(r, c) {
+  const cell = board[r][c];
+  if(cell.revealed || cell.flagged) return;
+  cell.revealed = true;
+  const cellEl = document.getElementById(`cell-${r}-${c}`);
+  cellEl.classList.add('revealed');
+  if(cell.mine) {
+    cellEl.textContent = '💣';
+    cellEl.classList.add('mine');
+    statusEl.textContent = '💥 Game Over 💥';
+    revealAllMines();
+    return;
+  } else if(cell.number > 0) {
+    cellEl.textContent = cell.number;
+  } else {
+    for(let dr=-1; dr<=1; dr++) {
+      for(let dc=-1; dc<=1; dc++) {
+        let nr = r+dr, nc = c+dc;
+        if(nr>=0 && nr<rows && nc>=0 && nc<cols) reveal(nr,nc);
+      }
+    }
+  }
+  checkWin();
+}
+
+function revealAllMines() {
+  for(let r=0; r<rows; r++) {
+    for(let c=0; c<cols; c++) {
+      if(board[r][c].mine) {
+        const cellEl = document.getElementById(`cell-${r}-${c}`);
+        cellEl.textContent = '💣';
+        cellEl.classList.add('mine','revealed');
+      }
+    }
+  }
+}
+
+function checkWin() {
+  let revealedCount = 0;
+  for(let r=0; r<rows; r++) {
+    for(let c=0; c<cols; c++) {
+      if(board[r][c].revealed) revealedCount++;
+    }
+  }
+  if(revealedCount === rows*cols - minesCount) {
+    statusEl.textContent = '🎉 You Win! 🎉';
+    revealAllMines();
+  }
+}
+
+function createUI() {
+  boardEl.innerHTML = '';
+  for(let r=0; r<rows; r++) {
+    for(let c=0; c<cols; c++) {
+      const cellEl = document.createElement('div');
+      cellEl.id = `cell-${r}-${c}`;
+      cellEl.classList.add('cell');
+      cellEl.addEventListener('click', () => reveal(r,c));
+      cellEl.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        const cell = board[r][c];
+        if(cell.revealed) return;
+        cell.flagged = !cell.flagged;
+        cellEl.textContent = cell.flagged ? '🚩' : '';
+      });
+      boardEl.appendChild(cellEl);
+    }
+  }
+}
+
+createBoard();
+createUI();
+document.getElementById('replay').addEventListener('click', () => {
+  statusEl.textContent = '';
+  createBoard();
+  createUI();
+});
+
+</script>
+
+</body>
+</html>

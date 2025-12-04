@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+
+
+
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TOA Knowledge Archive</title>
+<style>
+  :root{
+    --bg:#070707;
+    --panel:#0f0f10;
+    --accent:#a67cff;
+    --accent2:#7fd3e6;
+    --muted:#d6d6d8;
+    --glass: rgba(255,255,255,0.03);
+    --card-pad:14px;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--muted);font-family:Inter,Segoe UI,system-ui,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  header{padding:20px;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  h1{margin:0;color:var(--accent);font-size:22px}
+  p.lead{margin:0;color:#d8d8d8;opacity:.95}
+  .controls{margin-left:auto;display:flex;gap:10px;align-items:center}
+  .search, .btn, .select {
+    background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:10px;color:var(--muted);
+  }
+  .btn{cursor:pointer}
+  .container{padding:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+  .card{background:linear-gradient(180deg,var(--panel),rgba(16,16,16,0.92));padding:var(--card-pad);border-radius:12px;border:1px solid var(--glass);box-shadow:0 8px 28px rgba(0,0,0,0.55)}
+  .card h2{margin:0 0 8px 0;color:var(--accent2);font-size:16px}
+  details{background:rgba(255,255,255,0.01);padding:10px;border-radius:8px;margin:8px 0;border-left:4px solid rgba(166,124,255,0.08)}
+  summary{cursor:pointer;font-weight:700;color:var(--accent);outline:none}
+  code{background:rgba(255,255,255,0.03);padding:2px 6px;border-radius:6px;color:#e6e6e6;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+  .note{font-size:13px;color:#bfc7d1;margin-top:8px}
+  footer{padding:16px;color:#9a9a9a;border-top:1px solid rgba(255,255,255,0.03);text-align:center}
+  .mini{font-size:13px;color:#cfcfcf}
+  .flex{display:flex;gap:8px;align-items:center}
+  .flashcard{background:rgba(0,0,0,0.25);padding:12px;border-radius:8px;text-align:center}
+  .flashcard h3{margin:6px 0 12px}
+  .flash-btn{margin-top:8px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);cursor:pointer}
+  .hidden{display:none}
+  /* Print styles for cheat-sheets */
+  @media print {
+    body{background:white;color:black}
+    header, .controls, footer {display:none}
+    .container{grid-template-columns:1fr;gap:6px;padding:6px}
+    .card{border:none;box-shadow:none;background:transparent;padding:6px}
+    details summary {display:block}
+  }
+  /* quiz styles */
+  .quiz-q{margin:8px 0;padding:10px;border-radius:8px;background:rgba(0,0,0,0.15)}
+  .mc{display:block;margin:6px 0;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+  .correct{outline:2px solid #2ecc71}
+  .wrong{outline:2px solid #e74c3c}
+  /* layout helpers */
+  .col{display:flex;flex-direction:column}
+  .row{display:flex;gap:8px;align-items:center}
+  /* Obsidian Archive specific tweaks to make it feel like a full page */
+  .obsidian-page{background:linear-gradient(180deg,#0c0c0c,#0a0a0a);padding:18px;border-radius:10px;border:1px solid rgba(187,134,252,0.06)}
+  .obsidian-page h1, .obsidian-page h2, .obsidian-page h3 {color:#bb86fc;margin-top:0}
+  .obsidian-page .section {margin-bottom:20px;border-left:3px solid #bb86fc;padding-left:14px}
+  .obsidian-page details{background:#151515;padding:10px;margin:6px 0;border-radius:6px}
+  .obsidian-page summary{color:#ff79c6;font-weight:700;cursor:pointer}
+  /* make the obsidian section span full width of grid */
+  .full-width { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Obsidian Knowledge Wall — Full Pack</h1>
+    <p class="lead">Deep concepts, worked examples, printable cheat-sheets, flashcards, quizzes, plus the Obsidian Assembly Archive page</p>
+  </div>
+
+  <div class="controls">
+    <input id="q" class="search" placeholder="search the wall: eigenvector, Gibbs, regression, integral"/>
+    <button id="examToggle" class="btn">Enter Exam Mode</button>
+    <button id="printBtn" class="btn">Print / Export PDF</button>
+
+    <select id="jump" class="select">
+      <option value="">Jump to…</option>
+      <option value="#deep">Deep Notes</option>
+      <option value="#examples">Worked Examples</option>
+      <option value="#cheats">Cheat-sheets (print)</option>
+      <option value="#flash">Flashcards</option>
+      <option value="#quizzes">Quizzes</option>
+      <option value="#obsidian-archive">The Obsidian Assembly Archive</option>
+    </select>
+  </div>
+
+  <div class="game-grid">
+    <div class="game-card">
+        <div class="game-title">
+            <a href="games.html">Games</a>
+        </div>
+    </div>
+  </div>
+</header>
+<style>
+/* Unified header and game card styling */
+header {
+    padding: 20px;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #bb86fc;
+}
+
+.controls {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.search {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    padding: 8px 12px;
+    color: #eee;
+    border-radius: 4px;
+    flex: 1;
+}
+
+.btn {
+    background: #1a1a1a;
+    border: 1px solid #bb86fc;
+    color: #bb86fc;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: #bb86fc;
+    color: #0d0d0d;
+}
+
+.select {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    padding: 8px 10px;
+    color: #eee;
+    border-radius: 4px;
+}
+
+.game-grid {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+    }
+
+
+.game-card a {
+    text-decoration: none;
+    color: #bb86fc;
+    font-weight: bold;
+    border: 2px solid #bb86fc;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    display: inline-block;
+    margin-top: 10px;
+
+    box-shadow: 0 0 12px rgba(187, 134, 252, 0.6); /* THE GLOW */
+}
+
+.game-card a:hover {
+    background-color: #bb86fc;
+    color: #0d0d0d;
+    box-shadow: 0 0 20px rgba(187, 134, 252, 1); /* brighter glow on hover */
+}
+
+</style>
+
+
+
+<main class="container" id="grid">
+
+  <!-- Deep reference (condensed) -->
+  <section class="card" id="deep">
+    <h2>Deep Notes — Math, Physics, Bio, CS, Stats</h2>
+
+    <details open>
+      <summary>Advanced Math highlights</summary>
+      <p class="note">integrals, series, taylor expansions, multivariable calculus, linear algebra (svd, eigen), ODE/PDE basics, real analysis intuition. focus on geometric meaning of linear algebra and practice changing coordinates for integrals.</p>
+    </details>
+
+    <details>
+      <summary>Physics & Thermo</summary>
+      <p class="note">lagrangian mechanics, maxwell's equations in words, entropy and free energy, statistical ensembles and Boltzmann distribution — conceptual ties between microscopic behavior and macroscopic laws.</p>
+    </details>
+
+    <details>
+      <summary>Chemistry & Organic patterns</summary>
+      <p class="note">kinetics vs thermodynamics, mechanism patterns (nucleophile/electrophile), spectroscopy ideas. conceptual only. lab work requires supervision.</p>
+    </details>
+
+    <details>
+      <summary>Biology & Molecular</summary>
+      <p class="note">central dogma, gene regulation basics, cell signaling, population genetics overview. modern tools described conceptually only.</p>
+    </details>
+
+    <details>
+      <summary>Computer Science & ML</summary>
+      <p class="note">algorithms, data structures, complexity, database fundamentals, ML taxonomy, neural net intuition, regularization and evaluation methods.</p>
+    </details>
+
+    <details>
+      <summary>Statistics & Inference</summary>
+      <p class="note">distributions, CLT, confidence intervals, hypothesis testing concepts, Bayesian update intuition and when to prefer it.</p>
+    </details>
+
+  </section>
+
+  <!-- Worked examples -->
+  <section class="card" id="examples">
+    <h2>Worked Examples & Step-by-step Solutions</h2>
+
+    <details>
+      <summary>Math: Evaluate ∫_{0}^{1} x * e^{x^2} dx</summary>
+      <div class="note col">
+        <p>Solution idea: use substitution u = x^2, du = 2x dx so x dx = du/2</p>
+        <ol>
+          <li>Let u = x^2 → du = 2x dx → x dx = du/2</li>
+          <li>When x = 0 → u = 0; x=1 → u=1</li>
+          <li>Integral becomes (1/2) ∫_{0}^{1} e^{u} du</li>
+          <li>(1/2)(e^{u}) |_{0}^{1} = (1/2)(e - 1)</li>
+        </ol>
+        <p class="mini">Answer: (e - 1)/2</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Linear Algebra: Find eigenvalues of A = [[2,1],[1,2]]</summary>
+      <div class="note col">
+        <p>Characteristic polynomial det(A - λI) = (2-λ)^2 - 1 = λ^2 - 4λ + 3</p>
+        <p>Roots: λ = 1 and λ = 3</p>
+        <p>Eigenvectors: for λ=3 → v=(1,1). for λ=1 → v=(1,-1)</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Algorithms: Binary search correctness idea</summary>
+      <div class="note col">
+        <p>Invariant: target in current search interval. Each iteration halves interval; stops when found or interval empty. Complexity O(log n).</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Statistics: Fit OLS simple regression — intuition & formula</summary>
+      <div class="note col">
+        <p>Estimate slope β̂ = Cov(X,Y)/Var(X) and intercept α̂ = Ȳ - β̂ X̄. Residuals show model fit. Use train/test for evaluation to avoid overfitting.</p>
+      </div>
+    </details>
+
+  </section>
+
+  <!-- Cheat-sheets printable -->
+  <section class="card" id="cheats">
+    <h2>Printable Cheat-sheets (Press Print / Export PDF)</h2>
+
+    <div class="mini note">Each mini-sheet below is formatted to print cleanly. Use your browser print dialog and choose "Save as PDF" if you want files.</div>
+
+    <details>
+      <summary>Cheat: Math formula sheet</summary>
+      <div class="note">
+        <ul>
+          <li>Derivatives: (d/dx) x^n = n x^{n-1}, (d/dx) sin x = cos x</li>
+          <li>Integrals: ∫ x^n dx = x^{n+1}/(n+1) + C</li>
+          <li>Common series: e^x = Σ x^n/n!, 1/(1-x)=Σ x^n</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Cheat: Physics quick sheet</summary>
+      <div class="note">
+        <ul>
+          <li>Newton: F=ma. Lagrangian L=T-V, Euler-Lagrange for motion.</li>
+          <li>Thermo: dU = δQ - δW; free energy G = H - T S</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Cheat: CS & ML quick</summary>
+      <div class="note">
+        <ul>
+          <li>Big-O cheat: O(1), O(log n), O(n), O(n log n), O(n^2)</li>
+          <li>ML: loss, gradient descent, cross-validation, regularization (L1, L2)</li>
+        </ul>
+      </div>
+    </details>
+
+  </section>
+
+  <!-- Flashcards -->
+  <section class="card" id="flash">
+    <h2>Flashcards — shuffle, flip, study</h2>
+
+    <div id="flash-area" class="col">
+      <div class="flashcard" id="fc">
+        <h3 id="fc-q">What is the derivative of sin x?</h3>
+        <p id="fc-a" class="hidden">cos x</p>
+        <div class="row">
+          <button class="flash-btn" id="flip">Flip</button>
+          <button class="flash-btn" id="next">Next</button>
+          <button class="flash-btn" id="shuffle">Shuffle Deck</button>
+        </div>
+        <div class="note mini" id="fc-count">1 / 8</div>
+      </div>
+    </div>
+
+    <details>
+      <summary>Deck contents (conceptual)</summary>
+      <p class="mini">derivative rules, eigenvector def, CLT idea, Bayes' rule statement, Jacobian purpose, SVD idea, Lagrangian definition, OLS slope formula</p>
+    </details>
+  </section>
+
+  <!-- Quizzes -->
+  <section class="card" id="quizzes">
+    <h2>Exam-mode Quizzes</h2>
+
+    <div class="mini note">Toggle "Enter Exam Mode" to hide hints/answers and enable timer. Scores are local only.</div>
+
+    <details>
+      <summary>Quiz: Math & Linear Algebra (5 Qs)</summary>
+      <div id="quiz1" class="col">
+        <div class="quiz-q">
+          <div><strong>1.</strong> If A is 2x2 with eigenvalues 2 and 5, what is det(A)?</div>
+          <div class="row">
+            <button class="mc" data-val="7">7</button>
+            <button class="mc" data-val="10">10</button>
+            <button class="mc" data-val="1">1</button>
+            <button class="mc" data-val="0">0</button>
+          </div>
+        </div>
+
+        <div class="quiz-q">
+          <div><strong>2.</strong> The Taylor series of e^x about 0 includes which term?</div>
+          <div class="row">
+            <button class="mc" data-val="1">x^3/3!</button>
+            <button class="mc" data-val="0">x^2/2! + ...</button>
+            <button class="mc" data-val="0">only x terms</button>
+            <button class="mc" data-val="0">no polynomial terms</button>
+          </div>
+        </div>
+
+        <div class="quiz-q">
+          <div><strong>3.</strong> In OLS, residuals sum to?</div>
+          <div class="row">
+            <button class="mc" data-val="1">0</button>
+            <button class="mc" data-val="0">n</button>
+            <button class="mc" data-val="0">-1</button>
+            <button class="mc" data-val="0">depends</button>
+          </div>
+        </div>
+
+        <div class="quiz-q">
+          <div><strong>4.</strong> Which is a necessary condition for a function to have an inverse (locally)?</div>
+          <div class="row">
+            <button class="mc" data-val="1">Nonzero derivative at point</button>
+            <button class="mc" data-val="0">Zero derivative</button>
+            <button class="mc" data-val="0">Even symmetry</button>
+            <button class="mc" data-val="0">Negative second derivative</button>
+          </div>
+        </div>
+
+        <div class="quiz-q">
+          <div><strong>5.</strong> Which matrix decomposition is useful for low-rank approximations?</div>
+          <div class="row">
+            <button class="mc" data-val="1">SVD</button>
+            <button class="mc" data-val="0">LU</button>
+            <button class="mc" data-val="0">QR only</button>
+            <button class="mc" data-val="0">Cholesky</button>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <button id="submitQuiz1" class="btn">Submit Answers</button>
+          <div id="score1" class="mini" style="margin-left:8px"></div>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Quiz: CS & Algorithms (3 Qs)</summary>
+      <div id="quiz2" class="col">
+        <div class="quiz-q">
+          <div><strong>1.</strong> Binary search works on arrays that are…</div>
+          <div class="row">
+            <button class="mc" data-val="1">sorted</button>
+            <button class="mc" data-val="0">unsorted</button>
+            <button class="mc" data-val="0">linked only</button>
+            <button class="mc" data-val="0">random</button>
+          </div>
+        </div>
+
+        <div class="quiz-q">
+          <div><strong>2.</strong> Big-O for mergesort average case is…</div>
+          <div class="row">
+            <button class="mc" data-val="1">O(n log n)</button>
+            <button class="mc" data-val="0">O(n^2)</button>
+            <button class="mc" data-val="0">O(log n)</button>
+            <button class="mc" data-val="0">O(1)</button>
+          </div>
+        </div>
+
+        <div class="quiz-q">
+          <div><strong>3.</strong> In neural nets backprop calculates…</div>
+          <div class="row">
+            <button class="mc" data-val="1">gradients of loss w.r.t. weights</button>
+            <button class="mc" data-val="0">random updates</button>
+            <button class="mc" data-val="0">only forward pass</button>
+            <button class="mc" data-val="0">data normalization</button>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <button id="submitQuiz2" class="btn">Submit Answers</button>
+          <div id="score2" class="mini" style="margin-left:8px;display:inline-block"></div>
+        </div>
+      </div>
+    </details>
+
+  </section>
+
+  <!-- NEW: The Obsidian Assembly Archive as a full-width page section -->
+  <section class="card full-width" id="obsidian-archive" style="padding:20px;">
+    <div class="obsidian-page">
+      <h1>The Obsidian Assembly Knowledge Archive</h1>
+      <p>Welcome, Initiate. Only those worthy may read, absorb, and carry forward the truths herein. Handle this knowledge with caution, for some wisdom is not meant for the unprepared.</p>
+
+      <div class="section">
+          <h2>Forbidden Knowledge</h2>
+          <details>
+              <summary>The Origins of the Assembly</summary>
+              <p>The Obsidian Assembly traces back to the shadow of the First Eclipse, when knowledge of the unseen planes was first whispered to mortal ears. Only a chosen few retain the memory of these events.</p>
+          </details>
+          <details>
+              <summary>Secrets of the Hidden Arts</summary>
+              <p>From manipulating perception to bending the will of lesser beings, the Hidden Arts require discipline, secrecy, and a willingness to sacrifice what one once believed true.</p>
+          </details>
+          <details>
+              <summary>The Language of Shadows</summary>
+              <p>A cipher exists to encode and transmit our truths. Written by no mortal hand, it must be interpreted by intuition and practice, for literal translation is folly.</p>
+          </details>
+      </div>
+
+      <div class="section">
+          <h2>Rituals & Practices</h2>
+          <details>
+              <summary>Night of the Ascendant</summary>
+              <p>Performed during the crescent moon, initiates gather to align their intentions with the Assembly. Candles, chants, and precise timing dictate the potency of the ritual.</p>
+          </details>
+          <details>
+              <summary>Binding of the Veil</summary>
+              <p>This ritual allows communication with entities from beyond. Protective wards must be set beforehand, and participants must remain unwavering in focus.</p>
+          </details>
+          <details>
+              <summary>Obsidian Meditation</summary>
+              <p>A practice of mental fortification. Meditate before a black mirror or reflective surface for no less than an hour. Thoughts will become malleable, perception sharpened.</p>
+          </details>
+      </div>
+
+      <div class="section">
+          <h2>Council Notes</h2>
+          <details>
+              <summary>Minutes from the Arbiter</summary>
+              <p>Trust and discretion guide all decisions. Only the dedicated may access these directives. The Arbiter's word shapes the path of the Assembly.</p>
+          </details>
+          <details>
+              <summary>Vessel Responsibilities</summary>
+              <p>Council members act as both guardians and teachers. Each Vessel oversees specific domains, from archives to ritual execution.</p>
+          </details>
+      </div>
+
+      <div class="section">
+          <h2>Artifacts & Relics</h2>
+          <details>
+              <summary>Obsidian Mirror</summary>
+              <p>Used for divination and scrying, this mirror captures fragments of the unseen world. Handle only with gloves and a clear mind.</p>
+          </details>
+          <details>
+              <summary>Amulet of Whispered Truths</summary>
+              <p>Allows communication with hidden entities. Activation requires a whispered phrase known only to the Arbiter.</p>
+          </details>
+      </div>
+
+      <div class="section">
+          <h2>Archives / Records</h2>
+          <details>
+              <summary>Historical Logs</summary>
+              <p>Recordings of past councils, discoveries, and conflicts. These documents are key to understanding the Assembly's evolution and current strategies.</p>
+          </details>
+          <details>
+              <summary>Member Contributions</summary>
+              <p>Insights, experiments, and personal chronicles of members past and present. Each entry is coded to prevent unwanted disclosure.</p>
+          </details>
+      </div>
+
+      <p>End of Archive. Tread lightly, Initiate, for knowledge carries responsibility.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Tip: Use the search box to filter content. Press Print to export cheat-sheets to PDF. Exam Mode hides helpful hints and activates timers so you can self-test.
+</footer>
+
+<script>
+  // quick search/filter
+  const q = document.getElementById('q');
+  const cards = Array.from(document.querySelectorAll('.card'));
+  q.addEventListener('input', filter);
+  function filter() {
+    const term = q.value.trim().toLowerCase();
+    if(!term) {
+      cards.forEach(c => c.style.display = '');
+      return;
+    }
+    cards.forEach(card => {
+      const text = (card.innerText || card.textContent).toLowerCase();
+      card.style.display = text.indexOf(term) >= 0 ? '' : 'none';
+    });
+  }
+
+  // jump select
+  document.getElementById('jump').addEventListener('change', e=>{
+    if(e.target.value) location.hash = e.target.value;
+  });
+
+  // print
+  document.getElementById('printBtn').addEventListener('click', ()=> window.print());
+
+  // Flashcards deck
+  const deck = [
+    {q:"What is the derivative of sin x?", a:"cos x"},
+    {q:"Define an eigenvector", a:"A nonzero vector that changes by a scalar factor when a linear map is applied"},
+    {q:"State Central Limit Theorem", a:"Sample means converge to a normal distribution as sample size increases under mild conditions"},
+    {q:"What does SVD stand for?", a:"Singular Value Decomposition"},
+    {q:"Write Bayes' rule in words", a:"Posterior ∝ Prior × Likelihood"},
+    {q:"What is a Jacobian?", a:"Matrix of partial derivatives used for coordinate transforms"},
+    {q:"What is L = T - V?", a:"The Lagrangian: kinetic minus potential energy"},
+    {q:"OLS slope formula", a:"β̂ = Cov(X,Y)/Var(X)"}
+  ];
+  let idx = 0;
+  let order = deck.map((_,i)=>i);
+  function showCard(i){
+    const card = deck[order[i]];
+    document.getElementById('fc-q').innerText = card.q;
+    document.getElementById('fc-a').innerText = card.a;
+    document.getElementById('fc-a').classList.add('hidden');
+    document.getElementById('fc-count').innerText = (i+1) + " / " + deck.length;
+  }
+  document.getElementById('flip').addEventListener('click', ()=> {
+    document.getElementById('fc-a').classList.toggle('hidden');
+  });
+  document.getElementById('next').addEventListener('click', ()=> {
+    idx = (idx+1)%deck.length; showCard(idx);
+  });
+  document.getElementById('shuffle').addEventListener('click', ()=> {
+    for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
+    idx=0; showCard(idx);
+  });
+  showCard(idx);
+
+  // Quizzes logic
+  document.getElementById('submitQuiz1')?.addEventListener('click', ()=>{
+    const root = document.getElementById('quiz1');
+    const qs = root.querySelectorAll('.quiz-q');
+    let score=0;
+    qs.forEach(qEl=>{
+      const selected = qEl.querySelector('.mc.selected');
+      if(selected && selected.getAttribute('data-val') === '1') { score++ ; selected.classList.add('correct') }
+      else if(selected) selected.classList.add('wrong');
+    });
+    document.getElementById('score1').innerText = `Score: ${score} / ${qs.length}`;
+  });
+
+  document.getElementById('submitQuiz2')?.addEventListener('click', ()=>{
+    const root = document.getElementById('quiz2');
+    const qs = root.querySelectorAll('.quiz-q');
+    let score=0;
+    qs.forEach(qEl=>{
+      const selected = qEl.querySelector('.mc.selected');
+      if(selected && selected.getAttribute('data-val') === '1') { score++ ; selected.classList.add('correct') }
+      else if(selected) selected.classList.add('wrong');
+    });
+    document.getElementById('score2').innerText = `Score: ${score} / ${qs.length}`;
+  });
+
+  // exam mode: hide answers, lock flashcards, start timers
+  const examBtn = document.getElementById('examToggle');
+  let examMode = false;
+  examBtn.addEventListener('click', ()=>{
+    examMode = !examMode;
+    examBtn.innerText = examMode ? 'Exit Exam Mode' : 'Enter Exam Mode';
+    // hide all <code> and answers in flashcards
+    document.querySelectorAll('code, #fc-a').forEach(el => {
+      if(examMode) el.classList.add('hidden'); else el.classList.remove('hidden');
+    });
+    // close details (hide solutions)
+    document.querySelectorAll('details').forEach(d=>{
+      if(examMode) d.open = false;
+    });
+    // lock flashcards flipping
+    document.getElementById('flip').disabled = examMode;
+    // exam timer example
+    if(examMode){
+      if(!document.getElementById('examTimer')){
+        const t = document.createElement('div'); t.id='examTimer'; t.className='mini'; t.style.marginLeft='10px';
+        t.innerText = 'Exam timer: 10:00'; document.querySelector('.controls').appendChild(t);
+        let secs = 10*60;
+        window.examInterval = setInterval(()=>{ secs--; const mm = Math.floor(secs/60).toString().padStart(2,'0'); const ss = (secs%60).toString().padStart(2,'0'); t.innerText = `Exam timer: ${mm}:${ss}`; if(secs<=0){ clearInterval(window.examInterval); t.innerText='Time up' }},1000);
+      }
+    } else {
+      clearInterval(window.examInterval); const t = document.getElementById('examTimer'); if(t) t.remove();
+      document.querySelectorAll('code').forEach(el => el.classList.remove('hidden'));
+      document.getElementById('fc-a').classList.add('hidden');
+    }
+  });
+
+  // small UX: clicking MC options toggles selection
+  document.addEventListener('click', e=>{
+    if(e.target.classList.contains('mc')){
+      const parent = e.target.parentElement;
+      Array.from(parent.children).forEach(c=>c.classList.remove('selected'));
+      e.target.classList.add('selected');
+    }
+  });
+
+  // accessibility: allow "/" to focus search
+  window.addEventListener('keydown', e => {
+    if(e.key === '/' && document.activeElement !== q){ e.preventDefault(); q.focus(); q.select() }
+  });
+
+  // Jump to anchor if hash present on load
+  if(location.hash){
+    const el = document.querySelector(location.hash);
+    if(el) el.scrollIntoView({behavior:'smooth'});
+  }
+</script>
+</body>
+</html>
